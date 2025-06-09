@@ -12,6 +12,7 @@ import { format } from "date-fns";
 export default function Dashboard() {
   const { token } = useAuth();
 
+  // Daily summary data
   const {
     data: dailyVolumes,
     isLoading: dailyVolumesLoading,
@@ -21,42 +22,37 @@ export default function Dashboard() {
     enabled: !!token,
   });
 
+  // Bank distribution data
   const {
-    data: matchingRecords,
-    isLoading: matchingRecordsLoading,
-    refetch: refetchMatchingRecords,
+    data: bankDistribution,
+    isLoading: bankDistributionLoading,
+    refetch: refetchBankDistribution,
   } = useQuery({
-    queryKey: ["/api/dashboard/matching-records"],
+    queryKey: ["/api/dashboard/bank-distribution"],
     enabled: !!token,
   });
 
+  // Monthly/yearly statistics
   const {
-    data: todayCases,
-    isLoading: todayCasesLoading,
-    refetch: refetchTodayCases,
+    data: monthlyYearlyStats,
+    isLoading: monthlyYearlyStatsLoading,
+    refetch: refetchMonthlyYearlyStats,
   } = useQuery({
-    queryKey: ["/api/dashboard/today-cases"],
+    queryKey: ["/api/dashboard/monthly-yearly-statistics"],
     enabled: !!token,
   });
 
+  // Today's data by category
   const {
-    data: topIssuers,
-    isLoading: topIssuersLoading,
-    refetch: refetchTopIssuers,
+    data: todayDataByCategory,
+    isLoading: todayDataLoading,
+    refetch: refetchTodayData,
   } = useQuery({
-    queryKey: ["/api/dashboard/top-issuers"],
+    queryKey: ["/api/dashboard/today-data-by-category"],
     enabled: !!token,
   });
 
-  const {
-    data: topAcquirers,
-    isLoading: topAcquirersLoading,
-    refetch: refetchTopAcquirers,
-  } = useQuery({
-    queryKey: ["/api/dashboard/top-acquirers"],
-    enabled: !!token,
-  });
-
+  // Volume history for charts
   const {
     data: volumeHistory,
     isLoading: volumeHistoryLoading,
@@ -66,33 +62,31 @@ export default function Dashboard() {
     enabled: !!token,
   });
 
-  const isLoading = dailyVolumesLoading || matchingRecordsLoading || todayCasesLoading || 
-                   topIssuersLoading || topAcquirersLoading || volumeHistoryLoading;
+  const isLoading = dailyVolumesLoading || bankDistributionLoading || 
+                   monthlyYearlyStatsLoading || todayDataLoading || volumeHistoryLoading;
 
   const handleRefresh = () => {
     refetchDailyVolumes();
-    refetchMatchingRecords();
-    refetchTodayCases();
-    refetchTopIssuers();
-    refetchTopAcquirers();
+    refetchBankDistribution();
+    refetchMonthlyYearlyStats();
+    refetchTodayData();
     refetchVolumeHistory();
   };
 
   const handleExport = () => {
     const exportData = {
       dailyVolumes,
-      matchingRecords,
-      todayCases,
-      topIssuers,
-      topAcquirers,
+      bankDistribution,
+      monthlyYearlyStats,
+      todayDataByCategory,
       volumeHistory,
       exportDate: new Date().toISOString()
     };
 
     const ws = XLSX.utils.json_to_sheet([exportData]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Dashboard Data');
-    XLSX.writeFile(wb, `dashboard_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Comprehensive Dashboard Data');
+    XLSX.writeFile(wb, `comprehensive_dashboard_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   if (!token) {
@@ -105,116 +99,83 @@ export default function Dashboard() {
     );
   }
 
+  // Transform daily volumes data for the new summary cards
+  const summaryData = dailyVolumes ? {
+    receivedChargebacks: dailyVolumes.receivedChargebacks,
+    issuedChargebacks: dailyVolumes.issuedChargebacks,
+    receivedRepresentments: dailyVolumes.receivedRepresentments,
+    issuedRepresentments: dailyVolumes.issuedRepresentments,
+  } : {
+    receivedChargebacks: { count: 0, amount: "0" },
+    issuedChargebacks: { count: 0, amount: "0" },
+    receivedRepresentments: { count: 0, amount: "0" },
+    issuedRepresentments: { count: 0, amount: "0" },
+  };
+
   return (
     <div className="flex-1 overflow-auto">
       <Header
-        title="Today Dashboard"
+        title="Dashboard Bancaire Complet"
+        subtitle="Vue d'ensemble des opérations de chargeback et représentation"
         onRefresh={handleRefresh}
         onExport={handleExport}
         isLoading={isLoading}
       />
 
-      <div className="p-6 space-y-6">
-        {/* Annual Statistics by Bank */}
-        <AnnualStatistics />
-
-        {/* Daily Volumes KPIs */}
-        {dailyVolumesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="p-6">
-                <Skeleton className="h-4 w-32 mb-4" />
-                <Skeleton className="h-8 w-20 mb-2" />
-                <Skeleton className="h-6 w-24" />
-              </Card>
-            ))}
-          </div>
-        ) : dailyVolumes ? (
-          <DailyVolumes volumes={dailyVolumes} />
-        ) : (
-          <div className="text-center py-8 text-banking-text/60">
-            Failed to load daily volumes data
-          </div>
-        )}
-
-        {/* Matching Records & Charts */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {matchingRecordsLoading ? (
-            <Card className="p-6">
-              <Skeleton className="h-6 w-48 mb-4" />
-              <div className="space-y-4">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            </Card>
-          ) : matchingRecords ? (
-            <MatchingRecords matchingRecords={matchingRecords} />
-          ) : (
-            <Card className="p-6">
-              <div className="text-center py-8 text-banking-text/60">
-                Failed to load matching records data
-              </div>
-            </Card>
-          )}
-
-          {volumeHistoryLoading ? (
-            <Card className="p-6">
-              <Skeleton className="h-6 w-48 mb-4" />
-              <Skeleton className="h-64 w-full" />
-            </Card>
-          ) : volumeHistory ? (
-            <VolumeChart data={volumeHistory} />
-          ) : (
-            <Card className="p-6">
-              <div className="text-center py-8 text-banking-text/60">
-                Failed to load volume history data
-              </div>
-            </Card>
-          )}
+      <div className="p-6 space-y-8">
+        {/* Daily Summary Cards */}
+        <section>
+          <h2 className="text-xl font-semibold text-banking-text mb-4">
+            Résumé du Jour
+          </h2>
+          <DailySummaryCards data={summaryData} isLoading={dailyVolumesLoading} />
         </section>
 
-        {/* Top Actors */}
-        {topIssuersLoading || topAcquirersLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[...Array(2)].map((_, i) => (
-              <Card key={i} className="p-6">
-                <Skeleton className="h-6 w-48 mb-4" />
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, j) => (
-                    <Skeleton key={j} className="h-16 w-full" />
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : topIssuers && topAcquirers ? (
-          <TopActors topIssuers={topIssuers} topAcquirers={topAcquirers} />
-        ) : (
-          <div className="text-center py-8 text-banking-text/60">
-            Failed to load top actors data
-          </div>
+        {/* Bank Distribution Charts */}
+        <section>
+          <h2 className="text-xl font-semibold text-banking-text mb-4">
+            Répartition par Banque
+          </h2>
+          <BankDistributionCharts 
+            data={bankDistribution || { issuerBankData: [], acquirerBankData: [] }} 
+            isLoading={bankDistributionLoading} 
+          />
+        </section>
+
+        {/* Volume History Chart */}
+        {volumeHistory && (
+          <section>
+            <h2 className="text-xl font-semibold text-banking-text mb-4">
+              Évolution des Volumes
+            </h2>
+            <VolumeChart data={volumeHistory} />
+          </section>
         )}
 
-        {/* Today's Cases Table */}
-        {todayCasesLoading ? (
-          <Card className="p-6">
-            <Skeleton className="h-6 w-48 mb-4" />
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
-        ) : todayCases ? (
-          <CasesTable cases={todayCases} />
-        ) : (
-          <Card className="p-6">
-            <div className="text-center py-8 text-banking-text/60">
-              Failed to load today's cases data
-            </div>
-          </Card>
-        )}
+        {/* Monthly/Yearly Statistics Table */}
+        <section>
+          <h2 className="text-xl font-semibold text-banking-text mb-4">
+            Statistiques Temporelles
+          </h2>
+          <MonthlyYearlyStatistics 
+            data={monthlyYearlyStats || []} 
+            isLoading={monthlyYearlyStatsLoading} 
+          />
+        </section>
+
+        {/* Category Tables */}
+        <section>
+          <h2 className="text-xl font-semibold text-banking-text mb-4">
+            Données Traitées Aujourd'hui par Catégorie
+          </h2>
+          <CategoryTables
+            receivedChargebacks={todayDataByCategory?.receivedChargebacks || []}
+            issuedChargebacks={todayDataByCategory?.issuedChargebacks || []}
+            receivedRepresentments={todayDataByCategory?.receivedRepresentments || []}
+            issuedRepresentments={todayDataByCategory?.issuedRepresentments || []}
+            isLoading={todayDataLoading}
+          />
+        </section>
       </div>
     </div>
   );
