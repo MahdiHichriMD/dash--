@@ -3,13 +3,12 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, ExternalLink, Search, ArrowDown } from "lucide-react";
+import { Eye, ExternalLink, ArrowDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { format } from "date-fns";
 import { useState } from "react";
+import { AdvancedFilters } from "@/components/advanced-filters";
 
 export default function ReceivedChargebacks() {
   const { token } = useAuth();

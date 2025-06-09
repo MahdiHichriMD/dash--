@@ -43,14 +43,14 @@ export function Sidebar() {
         {/* Dashboard */}
         <div className="mb-4">
           <Link href="/">
-            <a className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition ${
+            <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition cursor-pointer ${
               isActive("/") 
                 ? "bg-banking-indicator/10 text-banking-indicator font-medium" 
                 : "hover:bg-banking-gray-100 text-banking-text/70 hover:text-banking-text"
             }`}>
               <Home className="w-4 h-4" />
               <span>Today Dashboard</span>
-            </a>
+            </div>
           </Link>
         </div>
 
@@ -63,24 +63,24 @@ export function Sidebar() {
             </CollapsibleTrigger>
             <CollapsibleContent className="ml-4 space-y-1">
               <Link href="/received-chargebacks">
-                <a className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition ${
+                <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition cursor-pointer ${
                   isActive("/received-chargebacks")
                     ? "bg-banking-indicator/10 text-banking-indicator font-medium"
                     : "text-banking-text/70 hover:text-banking-text hover:bg-banking-gray-100"
                 }`}>
                   <ArrowDown className="w-3 h-3 text-banking-error" />
                   <span>Received Chargebacks</span>
-                </a>
+                </div>
               </Link>
               <Link href="/issued-representments">
-                <a className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition ${
+                <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition cursor-pointer ${
                   isActive("/issued-representments")
                     ? "bg-banking-indicator/10 text-banking-indicator font-medium"
                     : "text-banking-text/70 hover:text-banking-text hover:bg-banking-gray-100"
                 }`}>
                   <ArrowUp className="w-3 h-3 text-banking-indicator" />
                   <span>Issued Representments</span>
-                </a>
+                </div>
               </Link>
             </CollapsibleContent>
           </Collapsible>
@@ -95,24 +95,24 @@ export function Sidebar() {
             </CollapsibleTrigger>
             <CollapsibleContent className="ml-4 space-y-1">
               <Link href="/issued-chargebacks">
-                <a className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition ${
+                <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition cursor-pointer ${
                   isActive("/issued-chargebacks")
                     ? "bg-banking-indicator/10 text-banking-indicator font-medium"
                     : "text-banking-text/70 hover:text-banking-text hover:bg-banking-gray-100"
                 }`}>
                   <ArrowUp className="w-3 h-3 text-banking-error" />
                   <span>Issued Chargebacks</span>
-                </a>
+                </div>
               </Link>
               <Link href="/received-representments">
-                <a className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition ${
+                <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg banking-transition cursor-pointer ${
                   isActive("/received-representments")
                     ? "bg-banking-indicator/10 text-banking-indicator font-medium"
                     : "text-banking-text/70 hover:text-banking-text hover:bg-banking-gray-100"
                 }`}>
                   <ArrowDown className="w-3 h-3 text-banking-indicator" />
                   <span>Received Representments</span>
-                </a>
+                </div>
               </Link>
             </CollapsibleContent>
           </Collapsible>
