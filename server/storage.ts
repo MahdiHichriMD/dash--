@@ -212,7 +212,7 @@ export class DatabaseStorage implements IStorage {
           gte(receivedChargebacks.dateTraitementRpa, startOfDay),
           lte(receivedChargebacks.dateTraitementRpa, endOfDay)
         ))
-        .limit(limit / 4)
+        .limit(Math.floor(limit / 4))
         .offset(offset),
       
       db.select().from(issuedRepresentments)
@@ -220,7 +220,7 @@ export class DatabaseStorage implements IStorage {
           gte(issuedRepresentments.dateTraitementRpa, startOfDay),
           lte(issuedRepresentments.dateTraitementRpa, endOfDay)
         ))
-        .limit(limit / 4)
+        .limit(Math.floor(limit / 4))
         .offset(offset),
       
       db.select().from(issuedChargebacks)
@@ -228,7 +228,7 @@ export class DatabaseStorage implements IStorage {
           gte(issuedChargebacks.dateTraitementRpa, startOfDay),
           lte(issuedChargebacks.dateTraitementRpa, endOfDay)
         ))
-        .limit(limit / 4)
+        .limit(Math.floor(limit / 4))
         .offset(offset),
       
       db.select().from(receivedRepresentments)
@@ -236,7 +236,7 @@ export class DatabaseStorage implements IStorage {
           gte(receivedRepresentments.dateTraitementRpa, startOfDay),
           lte(receivedRepresentments.dateTraitementRpa, endOfDay)
         ))
-        .limit(limit / 4)
+        .limit(Math.floor(limit / 4))
         .offset(offset)
     ]);
 

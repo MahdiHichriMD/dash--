@@ -46,16 +46,18 @@ export function AdvancedFilters({ filters, data, onFilteredData, tableName }: Ad
         } else if (filterConfig?.type === 'select') {
           filteredData = filteredData.filter(item => item[field] === value);
         } else if (filterConfig?.type === 'date') {
-          const itemDate = new Date(item[field]);
-          const filterDate = new Date(value);
-          filteredData = filteredData.filter(item => 
-            itemDate.toDateString() === filterDate.toDateString()
-          );
+          filteredData = filteredData.filter(item => {
+            const itemDate = new Date(item[field]);
+            const filterDate = new Date(value);
+            return itemDate.toDateString() === filterDate.toDateString();
+          });
         } else if (filterConfig?.type === 'amount') {
-          const amount = parseFloat(item[field]);
           const filterAmount = parseFloat(value);
           if (!isNaN(filterAmount)) {
-            filteredData = filteredData.filter(item => amount >= filterAmount);
+            filteredData = filteredData.filter(item => {
+              const amount = parseFloat(item[field]);
+              return amount >= filterAmount;
+            });
           }
         }
       }
