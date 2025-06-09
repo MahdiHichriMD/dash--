@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* Banking specific colors */
+  --banking-primary: hsl(0, 0%, 100%);
+  --banking-secondary: hsl(210, 3%, 83%);
+  --banking-text: hsl(260, 5%, 7%);
+  --banking-indicator: hsl(43, 74%, 66%);
+  --banking-error: hsl(4, 66%, 63%);
+  --banking-gray-50: hsl(0, 0%, 98%);
+  --banking-gray-100: hsl(0, 0%, 96%);
+  --banking-gray-200: hsl(0, 0%, 90%);
+  --banking-gray-300: hsl(210, 3%, 83%);
+  --banking-gray-800: hsl(260, 5%, 7%);
+
+  /* Sidebar colors */
+  --sidebar-background: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(260, 5%, 7%);
+  --sidebar-primary: hsl(43, 74%, 66%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(43, 74%, 66%);
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(0, 0%, 90%);
+  --sidebar-ring: hsl(43, 74%, 66%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Banking custom utilities */
+.banking-primary { background-color: var(--banking-primary); }
+.banking-secondary { background-color: var(--banking-secondary); }
+.banking-text { color: var(--banking-text); }
+.banking-indicator { color: var(--banking-indicator); }
+.banking-error { color: var(--banking-error); }
+.bg-banking-primary { background-color: var(--banking-primary); }
+.bg-banking-secondary { background-color: var(--banking-secondary); }
+.bg-banking-indicator { background-color: var(--banking-indicator); }
+.bg-banking-error { background-color: var(--banking-error); }
+.bg-banking-gray-50 { background-color: var(--banking-gray-50); }
+.bg-banking-gray-100 { background-color: var(--banking-gray-100); }
+.bg-banking-gray-200 { background-color: var(--banking-gray-200); }
+.bg-banking-gray-300 { background-color: var(--banking-gray-300); }
+.text-banking-primary { color: var(--banking-primary); }
+.text-banking-text { color: var(--banking-text); }
+.text-banking-indicator { color: var(--banking-indicator); }
+.text-banking-error { color: var(--banking-error); }
+.border-banking-gray-200 { border-color: var(--banking-gray-200); }
+.border-banking-gray-300 { border-color: var(--banking-gray-300); }
+
+/* Transitions for banking interface */
+.banking-transition { @apply transition-colors duration-200 ease-in-out; }
+
+/* Sidebar width */
+.sidebar-width { width: 280px; }
