@@ -425,6 +425,8 @@ export class DatabaseStorage implements IStorage {
 
   private async getYearlyData(startDate: Date, endDate: Date, bank: string) {
     const bankCondition = bank === 'all' ? undefined : bank;
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
 
     const [
       receivedChargebacksData,
@@ -439,8 +441,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(receivedChargebacks)
       .where(and(
-        gte(receivedChargebacks.dateTraitementRpa, startDate.toISOString()),
-        lte(receivedChargebacks.dateTraitementRpa, endDate.toISOString()),
+        sql`DATE(${receivedChargebacks.dateTraitementRpa}) >= ${startDateStr}`,
+        sql`DATE(${receivedChargebacks.dateTraitementRpa}) <= ${endDateStr}`,
         bankCondition ? eq(receivedChargebacks.acquirer, bankCondition) : undefined
       )),
 
@@ -451,8 +453,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(issuedRepresentments)
       .where(and(
-        gte(issuedRepresentments.dateTraitementRpa, startDate.toISOString()),
-        lte(issuedRepresentments.dateTraitementRpa, endDate.toISOString()),
+        sql`DATE(${issuedRepresentments.dateTraitementRpa}) >= ${startDateStr}`,
+        sql`DATE(${issuedRepresentments.dateTraitementRpa}) <= ${endDateStr}`,
         bankCondition ? eq(issuedRepresentments.acquirer, bankCondition) : undefined
       )),
 
@@ -463,8 +465,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(issuedChargebacks)
       .where(and(
-        gte(issuedChargebacks.dateTraitementRpa, startDate.toISOString()),
-        lte(issuedChargebacks.dateTraitementRpa, endDate.toISOString()),
+        sql`DATE(${issuedChargebacks.dateTraitementRpa}) >= ${startDateStr}`,
+        sql`DATE(${issuedChargebacks.dateTraitementRpa}) <= ${endDateStr}`,
         bankCondition ? eq(issuedChargebacks.acquirer, bankCondition) : undefined
       )),
 
@@ -475,8 +477,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(receivedRepresentments)
       .where(and(
-        gte(receivedRepresentments.dateTraitementRpa, startDate.toISOString()),
-        lte(receivedRepresentments.dateTraitementRpa, endDate.toISOString()),
+        sql`DATE(${receivedRepresentments.dateTraitementRpa}) >= ${startDateStr}`,
+        sql`DATE(${receivedRepresentments.dateTraitementRpa}) <= ${endDateStr}`,
         bankCondition ? eq(receivedRepresentments.acquirer, bankCondition) : undefined
       ))
     ]);
