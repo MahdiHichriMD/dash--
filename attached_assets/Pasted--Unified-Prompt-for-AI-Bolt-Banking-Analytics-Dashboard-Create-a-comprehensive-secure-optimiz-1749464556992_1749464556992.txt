@@ -1,0 +1,101 @@
+🔷 Unified Prompt for AI Bolt – Banking Analytics Dashboard
+Create a comprehensive, secure, optimized, responsive, and intuitive analytics dashboard tailored to banking operations. This dashboard is based on four operational tables:
+•	Received Chargebacks (Chargeback Reçu)
+•	Issued Representments (Représentation Émise)
+•	Issued Chargebacks (Chargeback Émis)
+•	Received Representments (Représentation Reçue)
+________________________________________
+1.	Functional Objectives
+2.	Stack : react , express js , mysql workbench 
+1.1 Home Page – “Today” Global Dashboard
+Modules & Data to Display:
+•	Daily Volumes
+o	Number of rows processed today per table
+o	Total AMOUNT_CP and AMOUNT_ORIGINE per table
+•	Matching Records
+o	For each Received Chargeback, number of linked Issued Representments (and vice versa)
+o	For each Issued Chargeback, number of linked Received Representments (and vice versa)
+•	Today's Cases Table
+o	Table of all rows processed today for each table, including direct links to related representations (if any)
+________________________________________
+1.2 Monthly and Comparative Statistics
+KPIs & Metrics:
+•	Volumes
+o	Issued and received chargebacks: total count, resolved (i.e., has a matching representation), pending
+•	MoM Evolution
+o	Monthly volume variation (Month vs. Month-1)
+•	Average Processing Time
+o	Median delay per agency from TRANSACTION_DATE to DATE_TRAITEMENT_RPA
+•	Top Actors by Volume
+o	Top Issuing Banks (ISSUER, LIB_BANK)
+o	Top Acquirers (ACQUIRER_REF)
+________________________________________
+2. Navigation – Sidebar Structure
+nginx
+CopierModifier
+Chargebacks 1  
+ ├─ Received Chargebacks  
+ └─ Issued Representments  
+ 
+Chargebacks 2  
+ ├─ Issued Chargebacks  
+ └─ Received Representments  
+Each subsection opens a dedicated page with:
+•	Full data table (all columns)
+•	Advanced multi-criteria search and dynamic filtering (by date, agency, merchant, operation code, status…)
+•	Sorting, pagination, lazy loading
+•	Buttons: “Show linked representation”, filter by “with/without representation”
+•	Secure export options (CSV, Excel, PDF) controlled by user permissions or temporary token
+•	Embedded documentation: tooltips & contextual user guide
+________________________________________
+3. Technical & UX Constraints
+•	Authentication, user roles, and access auditing
+•	High-performance SQL queries with indexing, pagination, and caching
+•	Action log (Audit mode) and auto-archiving of closed cases
+________________________________________
+4. UI Theme – Color Palette
+Use Case	HEX Code
+Secondary background	#D4D3D4
+Alerts / Errors	#DC5949
+Indicators / Charts	#EEB145
+Primary background / text	#FFFFFF
+Main text / bars	#120F11
+________________________________________
+5. Matching Logic (Relationships)
+Tables are matched using the composite key:
+scss
+CopierModifier
+(NUM_AFFILIATION, AGENCE, COMPTE, AUTHORIZATION, ACQUIRER_REF)
+This logic allows tracing direct relationships between chargebacks and representations.
+________________________________________
+6. Data Schema (Annex – Columns per Table)
+If the tables do not exist yet, they should be created with the following structures:
+Received Chargebacks
+objectivec
+CopierModifier
+REF_FICHIER, DATE_TRAITEMENT_RPA, NUM_AFFILIATION, LIB_COMMERCANT, AGENCE, COMPTE, REF_FACTURE,
+CARDHOLDER, OPERATION_CODE, CODE_OPERATION, LIB_CODE_OPERATION, AMOUNT_CP, AMOUNT_ORIGINE, CARD,
+PROCESSING, TRANSACTION_DATE, AUTHORIZATION, ISSUER, LIB_BANK, LOCAL, ACQUIRER, ACQUIRER_REF,
+CODE_REJET, LIB_REJET, SETTLEMENT, SORT_ENVOI, DATE_RECEPTION_JUSTIF, DATE_DEBIT, ANNULATION_COMMERCANT
+Issued Representments
+objectivec
+CopierModifier
+REF_FICHIER, DATE_TRAITEMENT_RPA, NUM_AFFILIATION, LIB_COMMERCANT, AGENCE, COMPTE, REF_FACTURE,
+CARDHOLDER, OPERATION_CODE, CODE_OPERATION, LIB_CODE_OPERATION, AMOUNT_CP, AMOUNT_ORIGINE, CARD,
+PROCESSING, TRANSACTION_DATE, AUTHORIZATION, ISSUER, LOCAL, ACQUIRER, LIB_BANK, ACQUIRER_REF,
+CODE_REPRESENTATION, LIB_REPRESENTATION, SETTLEMENT, ANNULATION_COMMERCANT
+Issued Chargebacks
+objectivec
+CopierModifier
+REF_FICHIER, DATE_TRAITEMENT_RPA, NUM_AFFILIATION, LIB_COMMERCANT, AGENCE, COMPTE, REF_FACTURE,
+TYPE_CARTE, CARDHOLDER, OPERATION_CODE, CODE_OPERATION, LIB_CODE_OPERATION, AMOUNT_CP, AMOUNT_ORIGINE,
+CARD, PROCESSING, TRANSACTION_DATE, AUTHORIZATION, ISSUER, LOCAL, ACQUIRER, ACQUIRER_REF,
+CODE_REJET, LIB_REJET, SETTLEMENT
+Received Representments
+objectivec
+CopierModifier
+REF_FICHIER, DATE_TRAITEMENT_RPA, NUM_AFFILIATION, LIB_COMMERCANT, AGENCE, COMPTE, REF_FACTURE,
+TYPE_CARTE, CARDHOLDER, OPERATION_CODE, CODE_OPERATION, LIB_CODE_OPERATION, AMOUNT_CP, AMOUNT_ORIGINE,
+CARD, PROCESSING, TRANSACTION_DATE, AUTHORIZATION, ISSUER, LOCAL, ACQUIRER, ACQUIRER_REF,
+CODE_REPRESENTATION, LIB_REPRESENTATION, SETTLEMENT
+
