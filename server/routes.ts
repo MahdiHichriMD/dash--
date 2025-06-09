@@ -254,6 +254,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New comprehensive statistics routes
+  app.get("/api/dashboard/bank-distribution", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      
+      const distributionData = await storage.getBankDistributionData(year);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_BANK_DISTRIBUTION",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(distributionData);
+    } catch (error) {
+      console.error("Bank distribution error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/monthly-yearly-statistics", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const type = (req.query.type as 'monthly' | 'yearly') || 'yearly';
+      
+      const statistics = await storage.getMonthlyYearlyStatistics(year, type);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_MONTHLY_YEARLY_STATISTICS",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(statistics);
+    } catch (error) {
+      console.error("Monthly yearly statistics error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/today-data-by-category", authenticateToken, async (req: any, res) => {
+    try {
+      const date = req.query.date ? new Date(req.query.date as string) : new Date();
+      
+      const categoryData = await storage.getTodayDataByCategory(date);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_TODAY_DATA_BY_CATEGORY",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(categoryData);
+    } catch (error) {
+      console.error("Today data by category error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Data table routes
   app.get("/api/received-chargebacks", authenticateToken, async (req: any, res) => {
     try {

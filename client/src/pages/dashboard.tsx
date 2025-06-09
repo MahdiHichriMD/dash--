@@ -1,13 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
-import { DailyVolumes } from "@/components/dashboard/daily-volumes";
-import { MatchingRecords } from "@/components/dashboard/matching-records";
+import { DailySummaryCards } from "@/components/dashboard/daily-summary-cards";
+import { BankDistributionCharts } from "@/components/dashboard/bank-distribution-charts";
+import { MonthlyYearlyStatistics } from "@/components/dashboard/monthly-yearly-statistics";
+import { CategoryTables } from "@/components/dashboard/category-tables";
 import { VolumeChart } from "@/components/dashboard/volume-chart";
-import { TopActors } from "@/components/dashboard/top-actors";
-import { CasesTable } from "@/components/dashboard/cases-table";
-import { AnnualStatistics } from "@/components/dashboard/annual-statistics";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
