@@ -9,16 +9,33 @@ import { useAuth } from "@/lib/auth";
 import { format } from "date-fns";
 import { useState } from "react";
 import { AdvancedFilters } from "@/components/advanced-filters";
+import * as XLSX from 'xlsx';
+
+interface ReceivedChargeback {
+  id: number;
+  refFichier: string;
+  libCommercant: string;
+  agence: string;
+  amountCp: string;
+  processing: string;
+  issuer: string;
+  settlement: string;
+  dateTraitementRpa: string;
+  transactionDate: string;
+  cardholder: string;
+  acquirer: string;
+  codeRejet: string;
+}
 
 export default function ReceivedChargebacks() {
   const { token } = useAuth();
-  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<ReceivedChargeback[]>([]);
 
   const {
     data: chargebacks,
     isLoading,
     refetch,
-  } = useQuery({
+  } = useQuery<ReceivedChargeback[]>({
     queryKey: ["/api/received-chargebacks"],
     enabled: !!token,
   });
@@ -28,7 +45,24 @@ export default function ReceivedChargebacks() {
   };
 
   const handleExport = () => {
-    console.log("Export received chargebacks");
+    const dataToExport = filteredData.length > 0 ? filteredData : (Array.isArray(chargebacks) ? chargebacks : []);
+    
+    if (dataToExport.length > 0) {
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Received Chargebacks');
+      XLSX.writeFile(wb, `received_chargebacks_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    }
+  };
+
+  const handleViewDetails = (chargeback: ReceivedChargeback) => {
+    console.log('View details for:', chargeback.refFichier);
+    alert(`Viewing details for chargeback: ${chargeback.refFichier}`);
+  };
+
+  const handleOpenExternal = (chargeback: ReceivedChargeback) => {
+    console.log('Open external for:', chargeback.refFichier);
+    alert(`Opening external link for: ${chargeback.refFichier}`);
   };
 
   const filterConfigs = [
@@ -77,7 +111,7 @@ export default function ReceivedChargebacks() {
       {/* Advanced Filters */}
       <AdvancedFilters
         filters={filterConfigs}
-        data={chargebacks || []}
+        data={Array.isArray(chargebacks) ? chargebacks : []}
         onFilteredData={setFilteredData}
         tableName="Received Chargebacks"
       />
@@ -237,10 +271,22 @@ export default function ReceivedChargebacks() {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 hover:bg-banking-gray-100"
+                            onClick={() => handleViewDetails(chargeback)}
+                            title="View Details"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 hover:bg-banking-gray-100"
+                            onClick={() => handleOpenExternal(chargeback)}
+                            title="Open External"
+                          >
                             <ExternalLink className="w-4 h-4" />
                           </Button>
                         </div>
