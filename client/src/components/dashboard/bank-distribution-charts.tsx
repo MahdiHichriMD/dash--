@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useState } from "react";
 
 interface BankDistributionData {
@@ -25,214 +25,127 @@ interface BankDistributionChartsProps {
   isLoading?: boolean;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
-
-const OPERATION_COLORS = {
-  receivedChargebacks: '#ef4444',
-  issuedChargebacks: '#f97316',
-  receivedRepresentments: '#3b82f6',
-  issuedRepresentments: '#10b981',
-};
-
-const OPERATION_LABELS = {
-  receivedChargebacks: 'Chargebacks Reçus',
-  issuedChargebacks: 'Chargebacks Émis',
-  receivedRepresentments: 'Représentations Reçues',
-  issuedRepresentments: 'Représentations Émises',
-};
+const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 export function BankDistributionCharts({ data, isLoading }: BankDistributionChartsProps) {
-  const [selectedYear, setSelectedYear] = useState("2025");
-  const [selectedOperation, setSelectedOperation] = useState<keyof typeof OPERATION_LABELS>("receivedChargebacks");
-
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
+  const [selectedType, setSelectedType] = useState<'chargebacks' | 'representments'>('chargebacks');
+  const [selectedDirection, setSelectedDirection] = useState<'received' | 'issued'>('received');
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="animate-pulse">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-48"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </CardContent>
-        </Card>
-        <Card className="animate-pulse">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-48"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </CardContent>
-        </Card>
+        {[...Array(2)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  // Prepare pie chart data for selected operation
-  const issuerPieData = data.issuerBankData.map((item, index) => ({
-    name: item.bank,
-    value: item[selectedOperation],
-    color: COLORS[index % COLORS.length],
-  })).filter(item => item.value > 0);
+  const getChartData = (bankType: 'issuerBankData' | 'acquirerBankData') => {
+    const sourceData = data?.[bankType] || [];
+    return sourceData.map(item => ({
+      bank: item.bank,
+      value: selectedType === 'chargebacks' 
+        ? (selectedDirection === 'received' ? item.receivedChargebacks : item.issuedChargebacks)
+        : (selectedDirection === 'received' ? item.receivedRepresentments : item.issuedRepresentments)
+    })).filter(item => item.value > 0);
+  };
 
-  const acquirerPieData = data.acquirerBankData.map((item, index) => ({
-    name: item.bank,
-    value: item[selectedOperation],
-    color: COLORS[index % COLORS.length],
-  })).filter(item => item.value > 0);
-
-  // Prepare bar chart data
-  const issuerBarData = data.issuerBankData.map(item => ({
-    bank: item.bank,
-    ...item,
-  }));
-
-  const acquirerBarData = data.acquirerBankData.map(item => ({
-    bank: item.bank,
-    ...item,
-  }));
+  const issuerData = getChartData('issuerBankData');
+  const acquirerData = getChartData('acquirerBankData');
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-banking-text">Année:</label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map(year => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-banking-text">Type d'opération:</label>
-          <Select value={selectedOperation} onValueChange={(value: keyof typeof OPERATION_LABELS) => setSelectedOperation(value)}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(OPERATION_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex gap-4 items-center">
+        <Select value={selectedType} onValueChange={(value: 'chargebacks' | 'representments') => setSelectedType(value)}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="chargebacks">Chargebacks</SelectItem>
+            <SelectItem value="representments">Représentations</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select value={selectedDirection} onValueChange={(value: 'received' | 'issued') => setSelectedDirection(value)}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="received">Reçus</SelectItem>
+            <SelectItem value="issued">Émis</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Pie Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Issuer Banks Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-banking-text">
-              Répartition par Issuer Bank - {OPERATION_LABELS[selectedOperation]}
-            </CardTitle>
+            <CardTitle>Répartition par Issuer Bank</CardTitle>
+            <CardDescription>
+              {selectedType === 'chargebacks' ? 'Chargebacks' : 'Représentations'} {selectedDirection === 'received' ? 'reçus' : 'émis'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={issuerPieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {issuerPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, 'Nombre']} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={issuerData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="bank" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    fontSize={12}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Acquirer Banks Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-banking-text">
-              Répartition par Acquirer Bank - {OPERATION_LABELS[selectedOperation]}
-            </CardTitle>
+            <CardTitle>Répartition par Acquirer Bank</CardTitle>
+            <CardDescription>
+              {selectedType === 'chargebacks' ? 'Chargebacks' : 'Représentations'} {selectedDirection === 'received' ? 'reçus' : 'émis'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={acquirerPieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {acquirerPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, 'Nombre']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bar Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-banking-text">
-              Vue d'ensemble Issuer Banks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={issuerBarData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="bank" angle={-45} textAnchor="end" height={80} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="receivedChargebacks" fill={OPERATION_COLORS.receivedChargebacks} name="Chargebacks Reçus" />
-                <Bar dataKey="issuedChargebacks" fill={OPERATION_COLORS.issuedChargebacks} name="Chargebacks Émis" />
-                <Bar dataKey="receivedRepresentments" fill={OPERATION_COLORS.receivedRepresentments} name="Représentations Reçues" />
-                <Bar dataKey="issuedRepresentments" fill={OPERATION_COLORS.issuedRepresentments} name="Représentations Émises" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-banking-text">
-              Vue d'ensemble Acquirer Banks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={acquirerBarData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="bank" angle={-45} textAnchor="end" height={80} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="receivedChargebacks" fill={OPERATION_COLORS.receivedChargebacks} name="Chargebacks Reçus" />
-                <Bar dataKey="issuedChargebacks" fill={OPERATION_COLORS.issuedChargebacks} name="Chargebacks Émis" />
-                <Bar dataKey="receivedRepresentments" fill={OPERATION_COLORS.receivedRepresentments} name="Représentations Reçues" />
-                <Bar dataKey="issuedRepresentments" fill={OPERATION_COLORS.issuedRepresentments} name="Représentations Émises" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={acquirerData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ bank, value, percent }) => `${bank}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {acquirerData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

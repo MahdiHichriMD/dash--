@@ -1,13 +1,7 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Calendar, Building2 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import { format } from "date-fns";
-import * as XLSX from 'xlsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 
 interface AnnualStatistics {
   year: number;
@@ -22,239 +16,107 @@ interface AnnualStatistics {
 }
 
 export function AnnualStatistics() {
-  const { token } = useAuth();
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
-  const [selectedBank, setSelectedBank] = useState("all");
-
-  const {
-    data: annualStats,
-    isLoading,
-    refetch,
-  } = useQuery<AnnualStatistics[]>({
-    queryKey: ["/api/dashboard/annual-statistics", selectedYear, selectedBank],
-    enabled: !!token,
+  
+  const { data: annualStats, isLoading } = useQuery<AnnualStatistics[]>({
+    queryKey: ['/api/dashboard/annual-overview', currentYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/dashboard/annual-overview?year=${currentYear}`);
+      if (!response.ok) throw new Error('Failed to fetch annual statistics');
+      return response.json();
+    },
   });
 
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
-  const availableBanks = ["all", "BNP Paribas", "Société Générale", "Crédit Agricole", "BPCE", "Crédit Mutuel"];
-
-  const formatAmount = (amount: number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'EUR',
-      notation: 'compact',
-      maximumFractionDigits: 1
+      currency: 'EUR'
     }).format(amount);
   };
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      notation: 'compact',
-      maximumFractionDigits: 1
-    }).format(num);
-  };
-
-  const handleExport = () => {
-    if (annualStats && annualStats.length > 0) {
-      const exportData = annualStats.map(stat => ({
-        Year: stat.year,
-        Bank: stat.bank,
-        'Total Cases': stat.totalCases,
-        'Total Amount (EUR)': stat.totalAmount,
-        'Received Chargebacks Count': stat.receivedChargebacks.count,
-        'Received Chargebacks Amount (EUR)': stat.receivedChargebacks.amount,
-        'Issued Representments Count': stat.issuedRepresentments.count,
-        'Issued Representments Amount (EUR)': stat.issuedRepresentments.amount,
-        'Issued Chargebacks Count': stat.issuedChargebacks.count,
-        'Issued Chargebacks Amount (EUR)': stat.issuedChargebacks.amount,
-        'Received Representments Count': stat.receivedRepresentments.count,
-        'Received Representments Amount (EUR)': stat.receivedRepresentments.amount,
-        'Trend (%)': stat.trend
-      }));
-
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Annual Statistics');
-      XLSX.writeFile(wb, `annual_statistics_${selectedYear}_${selectedBank}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    }
-  };
-
-  const stats = annualStats?.[0] || {
-    year: parseInt(selectedYear),
-    bank: selectedBank,
-    totalCases: 0,
-    totalAmount: 0,
-    receivedChargebacks: { count: 0, amount: 0 },
-    issuedRepresentments: { count: 0, amount: 0 },
-    issuedChargebacks: { count: 0, amount: 0 },
-    receivedRepresentments: { count: 0, amount: 0 },
-    trend: 0
-  };
-
-  return (
-    <Card className="bg-banking-primary border border-banking-gray-200">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-banking-text flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-banking-indicator" />
-            <span>Annual Statistics by Bank</span>
-          </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedBank} onValueChange={setSelectedBank}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Bank" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Banks</SelectItem>
-                {availableBanks.slice(1).map(bank => (
-                  <SelectItem key={bank} value={bank}>{bank}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleExport} variant="outline" size="sm">
-              Export
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+  if (isLoading) {
+    return (
+      <Card className="animate-pulse">
+        <CardHeader>
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
             ))}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-blue-700">Total Cases</p>
-                      <p className="text-2xl font-bold text-blue-900">{formatNumber(stats.totalCases)}</p>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      {stats.trend > 0 ? (
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-red-600" />
-                      )}
-                      <span className={`text-sm font-medium ${stats.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {Math.abs(stats.trend).toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        </CardContent>
+      </Card>
+    );
+  }
 
-              <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-green-700">Total Amount</p>
-                      <p className="text-2xl font-bold text-green-900">{formatAmount(stats.totalAmount)}</p>
-                    </div>
-                    <Building2 className="w-6 h-6 text-green-600" />
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Statistiques Annuelles {currentYear}</CardTitle>
+        <CardDescription>Vue d'ensemble des performances par banque</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {annualStats?.map((stat, index) => (
+            <div key={index} className="border rounded-lg p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">{stat.bank}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.totalCases} cas • {formatCurrency(stat.totalAmount)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {stat.trend > 0 ? (
+                    <TrendingUpIcon className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <TrendingDownIcon className="h-4 w-4 text-red-500" />
+                  )}
+                  <Badge variant={stat.trend > 0 ? "default" : "destructive"}>
+                    {Math.abs(stat.trend).toFixed(1)}%
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-red-600">
+                    {stat.receivedChargebacks.count}
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-orange-700">Chargebacks</p>
-                      <p className="text-2xl font-bold text-orange-900">
-                        {formatNumber(stats.receivedChargebacks.count + stats.issuedChargebacks.count)}
-                      </p>
-                    </div>
-                    <div className="text-xs text-orange-600">
-                      <div>R: {formatNumber(stats.receivedChargebacks.count)}</div>
-                      <div>I: {formatNumber(stats.issuedChargebacks.count)}</div>
-                    </div>
+                  <div className="text-xs text-muted-foreground">Chargebacks Reçus</div>
+                  <div className="text-xs">{formatCurrency(stat.receivedChargebacks.amount)}</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg font-bold text-orange-600">
+                    {stat.issuedChargebacks.count}
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-purple-700">Representments</p>
-                      <p className="text-2xl font-bold text-purple-900">
-                        {formatNumber(stats.receivedRepresentments.count + stats.issuedRepresentments.count)}
-                      </p>
-                    </div>
-                    <div className="text-xs text-purple-600">
-                      <div>R: {formatNumber(stats.receivedRepresentments.count)}</div>
-                      <div>I: {formatNumber(stats.issuedRepresentments.count)}</div>
-                    </div>
+                  <div className="text-xs text-muted-foreground">Chargebacks Émis</div>
+                  <div className="text-xs">{formatCurrency(stat.issuedChargebacks.amount)}</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">
+                    {stat.receivedRepresentments.count}
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-xs text-muted-foreground">Représentations Reçues</div>
+                  <div className="text-xs">{formatCurrency(stat.receivedRepresentments.amount)}</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-600">
+                    {stat.issuedRepresentments.count}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Représentations Émises</div>
+                  <div className="text-xs">{formatCurrency(stat.issuedRepresentments.amount)}</div>
+                </div>
+              </div>
             </div>
-
-            {/* Detailed Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-banking-gray-50">
-                <CardHeader>
-                  <CardTitle className="text-base font-medium text-banking-text">Received Operations</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-banking-text">Received Chargebacks</p>
-                      <p className="text-xs text-banking-text/60">{formatNumber(stats.receivedChargebacks.count)} cases</p>
-                    </div>
-                    <p className="text-lg font-bold text-banking-error">{formatAmount(stats.receivedChargebacks.amount)}</p>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-banking-text">Received Representments</p>
-                      <p className="text-xs text-banking-text/60">{formatNumber(stats.receivedRepresentments.count)} cases</p>
-                    </div>
-                    <p className="text-lg font-bold text-banking-indicator">{formatAmount(stats.receivedRepresentments.amount)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-banking-gray-50">
-                <CardHeader>
-                  <CardTitle className="text-base font-medium text-banking-text">Issued Operations</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-banking-text">Issued Chargebacks</p>
-                      <p className="text-xs text-banking-text/60">{formatNumber(stats.issuedChargebacks.count)} cases</p>
-                    </div>
-                    <p className="text-lg font-bold text-banking-error">{formatAmount(stats.issuedChargebacks.amount)}</p>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-banking-text">Issued Representments</p>
-                      <p className="text-xs text-banking-text/60">{formatNumber(stats.issuedRepresentments.count)} cases</p>
-                    </div>
-                    <p className="text-lg font-bold text-banking-indicator">{formatAmount(stats.issuedRepresentments.amount)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
