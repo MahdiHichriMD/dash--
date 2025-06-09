@@ -118,6 +118,9 @@ export default function Dashboard() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Annual Statistics by Bank */}
+        <AnnualStatistics />
+
         {/* Daily Volumes KPIs */}
         {dailyVolumesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

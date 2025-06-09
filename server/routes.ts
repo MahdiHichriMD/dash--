@@ -233,6 +233,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/dashboard/annual-statistics", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const bank = req.query.bank as string || "all";
+      
+      const stats = await storage.getAnnualStatistics(year, bank);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_ANNUAL_STATISTICS",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Annual statistics error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Data table routes
   app.get("/api/received-chargebacks", authenticateToken, async (req: any, res) => {
     try {

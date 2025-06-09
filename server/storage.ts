@@ -74,6 +74,19 @@ export interface IStorage {
 
   // Audit logging
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
+  // Annual statistics
+  getAnnualStatistics(year: number, bank: string): Promise<Array<{
+    year: number;
+    bank: string;
+    totalCases: number;
+    totalAmount: number;
+    receivedChargebacks: { count: number; amount: number };
+    issuedRepresentments: { count: number; amount: number };
+    issuedChargebacks: { count: number; amount: number };
+    receivedRepresentments: { count: number; amount: number };
+    trend: number;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -369,6 +382,118 @@ export class DatabaseStorage implements IStorage {
       .values(insertLog)
       .returning();
     return log;
+  }
+
+  async getAnnualStatistics(year: number, bank: string) {
+    try {
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59);
+      const previousYear = year - 1;
+      const startOfPreviousYear = new Date(previousYear, 0, 1);
+      const endOfPreviousYear = new Date(previousYear, 11, 31, 23, 59, 59);
+
+      // Get current year data
+      const [currentYearData] = await Promise.all([
+        this.getYearlyData(startOfYear, endOfYear, bank),
+      ]);
+
+      // Get previous year data for trend calculation
+      const [previousYearData] = await Promise.all([
+        this.getYearlyData(startOfPreviousYear, endOfPreviousYear, bank),
+      ]);
+
+      const trend = previousYearData.totalCases > 0 
+        ? ((currentYearData.totalCases - previousYearData.totalCases) / previousYearData.totalCases) * 100
+        : 0;
+
+      return [{
+        year,
+        bank: bank === 'all' ? 'All Banks' : bank,
+        totalCases: currentYearData.totalCases,
+        totalAmount: currentYearData.totalAmount,
+        receivedChargebacks: currentYearData.receivedChargebacks,
+        issuedRepresentments: currentYearData.issuedRepresentments,
+        issuedChargebacks: currentYearData.issuedChargebacks,
+        receivedRepresentments: currentYearData.receivedRepresentments,
+        trend
+      }];
+    } catch (error) {
+      console.error('Annual statistics error:', error);
+      return [];
+    }
+  }
+
+  private async getYearlyData(startDate: Date, endDate: Date, bank: string) {
+    const bankCondition = bank === 'all' ? undefined : bank;
+
+    const [
+      receivedChargebacksData,
+      issuedRepresentmentsData,
+      issuedChargebacksData,
+      receivedRepresentmentsData
+    ] = await Promise.all([
+      // Received Chargebacks
+      db.select({
+        count: sql<number>`count(*)::int`,
+        amount: sql<number>`sum(${receivedChargebacks.amountCp}::decimal)::float`
+      })
+      .from(receivedChargebacks)
+      .where(and(
+        gte(receivedChargebacks.dateTraitementRpa, startDate.toISOString()),
+        lte(receivedChargebacks.dateTraitementRpa, endDate.toISOString()),
+        bankCondition ? eq(receivedChargebacks.acquirer, bankCondition) : undefined
+      )),
+
+      // Issued Representments
+      db.select({
+        count: sql<number>`count(*)::int`,
+        amount: sql<number>`sum(${issuedRepresentments.amountCp}::decimal)::float`
+      })
+      .from(issuedRepresentments)
+      .where(and(
+        gte(issuedRepresentments.dateTraitementRpa, startDate.toISOString()),
+        lte(issuedRepresentments.dateTraitementRpa, endDate.toISOString()),
+        bankCondition ? eq(issuedRepresentments.acquirer, bankCondition) : undefined
+      )),
+
+      // Issued Chargebacks
+      db.select({
+        count: sql<number>`count(*)::int`,
+        amount: sql<number>`sum(${issuedChargebacks.amountCp}::decimal)::float`
+      })
+      .from(issuedChargebacks)
+      .where(and(
+        gte(issuedChargebacks.dateTraitementRpa, startDate.toISOString()),
+        lte(issuedChargebacks.dateTraitementRpa, endDate.toISOString()),
+        bankCondition ? eq(issuedChargebacks.acquirer, bankCondition) : undefined
+      )),
+
+      // Received Representments
+      db.select({
+        count: sql<number>`count(*)::int`,
+        amount: sql<number>`sum(${receivedRepresentments.amountCp}::decimal)::float`
+      })
+      .from(receivedRepresentments)
+      .where(and(
+        gte(receivedRepresentments.dateTraitementRpa, startDate.toISOString()),
+        lte(receivedRepresentments.dateTraitementRpa, endDate.toISOString()),
+        bankCondition ? eq(receivedRepresentments.acquirer, bankCondition) : undefined
+      ))
+    ]);
+
+    const rcb = receivedChargebacksData[0] || { count: 0, amount: 0 };
+    const ire = issuedRepresentmentsData[0] || { count: 0, amount: 0 };
+    const icb = issuedChargebacksData[0] || { count: 0, amount: 0 };
+    const rre = receivedRepresentmentsData[0] || { count: 0, amount: 0 };
+
+    return {
+      totalCases: rcb.count + ire.count + icb.count + rre.count,
+      totalAmount: (rcb.amount || 0) + (ire.amount || 0) + (icb.amount || 0) + (rre.amount || 0),
+      receivedChargebacks: { count: rcb.count, amount: rcb.amount || 0 },
+      issuedRepresentments: { count: ire.count, amount: ire.amount || 0 },
+      issuedChargebacks: { count: icb.count, amount: icb.amount || 0 },
+      receivedRepresentments: { count: rre.count, amount: rre.amount || 0 }
+    };
   }
 }
 
