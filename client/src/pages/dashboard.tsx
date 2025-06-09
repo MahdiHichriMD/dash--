@@ -10,6 +10,7 @@ import { VolumeHistoryPoint, DailyVolumes, MatchingRecords, TopIssuer, TopAcquir
 import { AnnualStatistics } from "@/components/dashboard/annual-statistics";
 import { BankDistributionCharts } from "@/components/dashboard/bank-distribution-charts";
 import { AdvancedFilters } from "@/components/advanced-filters";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { format } from "date-fns";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -27,54 +28,34 @@ export default function Dashboard() {
   const today = new Date().toISOString().split('T')[0];
 
   // Fetch daily volumes
-  const { data: dailyVolumes, isLoading: loadingVolumes } = useQuery<DailyVolumes>({
-    queryKey: ['/api/dashboard/daily-volumes', today],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/daily-volumes?date=${today}`);
-      if (!response.ok) throw new Error('Failed to fetch daily volumes');
-      return response.json();
-    },
-  });
+  const { data: dailyVolumes, isLoading: loadingVolumes } = useAuthenticatedQuery<DailyVolumes>(
+    ['/api/dashboard/daily-volumes', today],
+    `/api/dashboard/daily-volumes?date=${today}`
+  );
 
   // Fetch annual statistics
-  const { data: annualStats, isLoading: loadingAnnual } = useQuery({
-    queryKey: ['/api/dashboard/annual-statistics', selectedYear],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/annual-statistics?year=${selectedYear}`);
-      if (!response.ok) throw new Error('Failed to fetch annual statistics');
-      return response.json();
-    },
-  });
+  const { data: annualStats, isLoading: loadingAnnual } = useAuthenticatedQuery(
+    ['/api/dashboard/annual-statistics', selectedYear.toString()],
+    `/api/dashboard/annual-statistics?year=${selectedYear}`
+  );
 
   // Fetch bank distribution data
-  const { data: bankDistribution, isLoading: loadingBankDist } = useQuery({
-    queryKey: ['/api/dashboard/bank-distribution', selectedYear],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/bank-distribution?year=${selectedYear}`);
-      if (!response.ok) throw new Error('Failed to fetch bank distribution');
-      return response.json();
-    },
-  });
+  const { data: bankDistribution, isLoading: loadingBankDist } = useAuthenticatedQuery(
+    ['/api/dashboard/bank-distribution', selectedYear.toString()],
+    `/api/dashboard/bank-distribution?year=${selectedYear}`
+  );
 
   // Fetch monthly/yearly statistics for export table
-  const { data: monthlyStats, isLoading: loadingMonthly } = useQuery({
-    queryKey: ['/api/dashboard/monthly-statistics', selectedYear],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/monthly-statistics?year=${selectedYear}&type=monthly`);
-      if (!response.ok) throw new Error('Failed to fetch monthly statistics');
-      return response.json();
-    },
-  });
+  const { data: monthlyStats, isLoading: loadingMonthly } = useAuthenticatedQuery(
+    ['/api/dashboard/monthly-statistics', selectedYear.toString()],
+    `/api/dashboard/monthly-statistics?year=${selectedYear}&type=monthly`
+  );
 
   // Fetch today's data by category
-  const { data: todayData, isLoading: loadingTodayData } = useQuery({
-    queryKey: ['/api/dashboard/today-data', today],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/today-data?date=${today}`);
-      if (!response.ok) throw new Error('Failed to fetch today data');
-      return response.json();
-    },
-  });
+  const { data: todayData, isLoading: loadingTodayData } = useAuthenticatedQuery(
+    ['/api/dashboard/today-data', today],
+    `/api/dashboard/today-data?date=${today}`
+  );
 
   const isLoading = loadingVolumes || loadingAnnual || loadingBankDist || loadingMonthly || loadingTodayData;
 
