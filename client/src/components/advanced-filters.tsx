@@ -136,41 +136,47 @@ export function AdvancedFilters({ filters, data, onFilteredData, tableName }: Ad
         });
       }) : data;
 
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(16);
-    doc.text(`${tableName} Report`, 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated on ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, 20, 30);
-    
-    // Prepare table data
-    const headers = filters.map(f => f.label);
-    const rows = filteredData.map(item => 
-      filters.map(f => {
-        const value = item[f.field];
-        if (f.type === 'date' && value) {
-          return format(new Date(value), 'yyyy-MM-dd');
-        } else if (f.type === 'amount' && value) {
-          return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'EUR'
-          }).format(parseFloat(value));
-        }
-        return value || '-';
-      })
-    );
+    import('jspdf').then((jsPDFModule) => {
+      const { jsPDF } = jsPDFModule;
+      
+      return import('jspdf-autotable').then(() => {
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text(`${tableName} Report`, 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Generated on ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, 20, 30);
+        
+        // Prepare table data
+        const headers = filters.map(f => f.label);
+        const rows = filteredData.map(item => 
+          filters.map(f => {
+            const value = item[f.field];
+            if (f.type === 'date' && value) {
+              return format(new Date(value), 'yyyy-MM-dd');
+            } else if (f.type === 'amount' && value) {
+              return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'EUR'
+              }).format(parseFloat(value));
+            }
+            return value || '-';
+          })
+        );
 
-    // Add table
-    (doc as any).autoTable({
-      head: [headers],
-      body: rows,
-      startY: 40,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [238, 177, 69] }, // Banking indicator color
+        // Add table
+        (doc as any).autoTable({
+          head: [headers],
+          body: rows,
+          startY: 40,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [238, 177, 69] }, // Banking indicator color
+        });
+
+        doc.save(`${tableName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      });
     });
-
-    doc.save(`${tableName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   const activeFilterCount = Object.keys(activeFilters).length;

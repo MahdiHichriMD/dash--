@@ -5,9 +5,12 @@ import { MatchingRecords } from "@/components/dashboard/matching-records";
 import { VolumeChart } from "@/components/dashboard/volume-chart";
 import { TopActors } from "@/components/dashboard/top-actors";
 import { CasesTable } from "@/components/dashboard/cases-table";
+import { AnnualStatistics } from "@/components/dashboard/annual-statistics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
+import * as XLSX from 'xlsx';
+import { format } from "date-fns";
 
 export default function Dashboard() {
   const { token } = useAuth();
@@ -79,8 +82,20 @@ export default function Dashboard() {
   };
 
   const handleExport = () => {
-    // Implementation for export functionality
-    console.log("Export dashboard data");
+    const exportData = {
+      dailyVolumes,
+      matchingRecords,
+      todayCases,
+      topIssuers,
+      topAcquirers,
+      volumeHistory,
+      exportDate: new Date().toISOString()
+    };
+
+    const ws = XLSX.utils.json_to_sheet([exportData]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Dashboard Data');
+    XLSX.writeFile(wb, `dashboard_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   if (!token) {
