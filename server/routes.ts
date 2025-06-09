@@ -401,6 +401,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Additional dashboard endpoints for comprehensive features
+  app.get("/api/dashboard/annual-statistics", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const bank = req.query.bank as string || 'all';
+      
+      const stats = await storage.getAnnualStatistics(year, bank);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_ANNUAL_STATISTICS",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Annual statistics error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/annual-overview", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      
+      // Get overview for all major banks
+      const majorBanks = ['BNP Paribas', 'Crédit Agricole', 'Société Générale', 'BPCE', 'Crédit Mutuel'];
+      const results = [];
+      
+      for (const bank of majorBanks) {
+        const bankStats = await storage.getAnnualStatistics(year, bank);
+        if (bankStats.length > 0) {
+          results.push(bankStats[0]);
+        }
+      }
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_ANNUAL_OVERVIEW",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Annual overview error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/bank-distribution", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      
+      const distribution = await storage.getBankDistributionData(year);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_BANK_DISTRIBUTION",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      res.json(distribution);
+    } catch (error) {
+      console.error("Bank distribution error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/monthly-statistics", authenticateToken, async (req: any, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const type = req.query.type as 'monthly' | 'yearly' || 'monthly';
+      
+      const stats = await storage.getMonthlyYearlyStatistics(year, type);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_MONTHLY_STATISTICS",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Monthly statistics error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/dashboard/today-data", authenticateToken, async (req: any, res) => {
+    try {
+      const date = req.query.date ? new Date(req.query.date as string) : new Date();
+      
+      const data = await storage.getTodayDataByCategory(date);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: "VIEW_TODAY_DATA",
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      res.json(data);
+    } catch (error) {
+      console.error("Today data error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
