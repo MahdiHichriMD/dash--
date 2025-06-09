@@ -40,19 +40,34 @@ export default function Dashboard() {
   );
 
   // Fetch bank distribution data
-  const { data: bankDistribution, isLoading: loadingBankDist } = useAuthenticatedQuery(
+  const { data: bankDistribution, isLoading: loadingBankDist } = useAuthenticatedQuery<{
+    issuerBankData: Array<{
+      bank: string;
+      receivedChargebacks: number;
+      issuedChargebacks: number;
+      receivedRepresentments: number;
+      issuedRepresentments: number;
+    }>;
+    acquirerBankData: Array<{
+      bank: string;
+      receivedChargebacks: number;
+      issuedChargebacks: number;
+      receivedRepresentments: number;
+      issuedRepresentments: number;
+    }>;
+  }>(
     ['/api/dashboard/bank-distribution', selectedYear.toString()],
     `/api/dashboard/bank-distribution?year=${selectedYear}`
   );
 
   // Fetch monthly/yearly statistics for export table
-  const { data: monthlyStats, isLoading: loadingMonthly } = useAuthenticatedQuery(
+  const { data: monthlyStats, isLoading: loadingMonthly } = useAuthenticatedQuery<any[]>(
     ['/api/dashboard/monthly-statistics', selectedYear.toString()],
     `/api/dashboard/monthly-statistics?year=${selectedYear}&type=monthly`
   );
 
   // Fetch today's data by category
-  const { data: todayData, isLoading: loadingTodayData } = useAuthenticatedQuery(
+  const { data: todayData, isLoading: loadingTodayData } = useAuthenticatedQuery<Record<string, any[]>>(
     ['/api/dashboard/today-data', today],
     `/api/dashboard/today-data?date=${today}`
   );
@@ -218,7 +233,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bank Distribution Charts */}
-      <BankDistributionCharts data={bankDistribution} isLoading={loadingBankDist} />
+      <BankDistributionCharts data={bankDistribution || { issuerBankData: [], acquirerBankData: [] }} isLoading={loadingBankDist} />
 
       {/* Annual Statistics */}
       <AnnualStatistics />
@@ -341,7 +356,7 @@ export default function Dashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => exportToPDF(filteredData[key] || todayData?.[key] || [], `${key} ${today}`)}
+                        onClick={() => exportToPDF(filteredData[key] || todayData?.[key as keyof typeof todayData] || [], `${key} ${today}`)}
                       >
                         <FileText className="h-4 w-4 mr-2" />
                         PDF
@@ -349,7 +364,7 @@ export default function Dashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => exportToExcel(filteredData[key] || todayData?.[key] || [], `${key} ${today}`)}
+                        onClick={() => exportToExcel(filteredData[key] || todayData?.[key as keyof typeof todayData] || [], `${key} ${today}`)}
                       >
                         <FileSpreadsheet className="h-4 w-4 mr-2" />
                         Excel
@@ -359,7 +374,7 @@ export default function Dashboard() {
                   
                   <AdvancedFilters
                     filters={filters}
-                    data={todayData?.[key] || []}
+                    data={todayData?.[key as keyof typeof todayData] || []}
                     onFilteredData={(filtered) => setFilteredData((prev: any) => ({ ...prev, [key]: filtered }))}
                     tableName={key}
                   />

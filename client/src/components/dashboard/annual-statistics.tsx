@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 
 interface AnnualStatistics {
   year: number;
@@ -18,14 +19,10 @@ interface AnnualStatistics {
 export function AnnualStatistics() {
   const currentYear = new Date().getFullYear();
   
-  const { data: annualStats, isLoading } = useQuery<AnnualStatistics[]>({
-    queryKey: ['/api/dashboard/annual-overview', currentYear],
-    queryFn: async () => {
-      const response = await fetch(`/api/dashboard/annual-overview?year=${currentYear}`);
-      if (!response.ok) throw new Error('Failed to fetch annual statistics');
-      return response.json();
-    },
-  });
+  const { data: annualStats, isLoading } = useAuthenticatedQuery<AnnualStatistics[]>(
+    ['/api/dashboard/annual-overview', currentYear.toString()],
+    `/api/dashboard/annual-overview?year=${currentYear}`
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
